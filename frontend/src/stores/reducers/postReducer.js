@@ -1,4 +1,4 @@
-import * as posts from '../../actions';
+import * as actionType from '../../actions/actionType';
 
 const INIT_STEATE = {
     posts:[],
@@ -7,33 +7,42 @@ const INIT_STEATE = {
 
 const postReducer = (state = INIT_STEATE, action) => {
     switch(action.type){
-        case posts.CATEGORY:
+        case actionType.CATEGORY:
             return{
                 ...state, 
                 categories:action.categories   
             }
-        case posts.CREATE_POST:
+        case actionType.CREATE_POST:
             return {
                 ...state
             }
-        case posts.VIEW_POST:
+        case actionType.VIEW_POST:
+            
             return{
                 ...state,
                 posts:action.posts
             }
-        case posts.EDIT_POST:
+        case actionType.EDIT_POST:
             return{
                 ...state
             }
-        case posts.DELETE_POST:
-        const updatePost = state.posts.filter(item => item.id !== action.post.id);
-            return{
-                ...state,
-                posts:updatePost
+        case actionType.DELETE_POST:
+            const updatePost = state.posts.filter(item => item.id !== action.post.id);
+                return{
+                    ...state,
+                    posts:updatePost
+                }
+        case actionType.POST_VOTE:
+            let postList = [...state.posts];
+            for (let index = 0; index < postList.length; index++) {
+                if(postList[index].id===action.vote.id){
+                    postList[index]=action.vote;
+                    break;
+                };                
             }
-        case posts.POST_VOTE:
             return {
-                ...state
+                ...state,
+                posts:postList
             }
         default:
             return state;

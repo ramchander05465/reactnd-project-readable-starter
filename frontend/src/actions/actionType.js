@@ -1,0 +1,11 @@
+export const CATEGORY = 'CATEGORY';
+export const CREATE_POST = 'CREATE_POST';
+export const VIEW_POST  =   'VIEW_POST';
+export const EDIT_POST  = 'EDIT_POST';
+export const DELETE_POST = 'DELETE_POST';
+export const POST_VOTE = 'POST_VOTE';
+export const ADD_COMMENTS = "ADD_COMMENTS"
+export const GET_COMMENTS = 'GET_COMMENTS';
+export const EDIT_COMMENT = 'EDIT_COMMENT';
+export const REMOVE_COMMETS = 'REMOVE_COMMENTS';
+export const COMMENTS_VOTE = 'COMMENTS_VOTE';

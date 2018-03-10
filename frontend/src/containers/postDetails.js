@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import uuid from 'uuid';
-import * as actionType from '../actions';
+import {voteOnPost} from '../actions/postCommand'
+import {addComment,getComments, editComments,deleteComments,voteOnComment} from '../actions/commentCommand';
 import {connect} from 'react-redux';
 import {Breadcrumb, BreadcrumbItem} from 'reactstrap';
 import {FaEdit, FaTrash, FaThumbsOUp, FaThumbsODown} from 'react-icons/lib/fa';
@@ -10,28 +11,33 @@ import { ToastContainer, toast } from 'react-toastify';
 
 class PostDetails extends Component {
     post;
+    postId;
     times;
     commentForEdit;
     constructor(props){
         super(props);
-        this.post = this.props.location.state;
-        this.times = new Date(this.post.timestamp).toISOString()
-    }
-    
-     
-    state = {
-        editMode:false,
-        author:'',
-        body:'',
-        commentID:null
+        this.postId = this.props.match.params.postId;
     }
 
+    state = {
+        editMode : false,
+        author : '',
+        body : '',
+        commentID : null
+    }
+    
+    componentWillMount = () => {
+        this.post = this.props.posts.filter(data => data.id === this.postId);
+        this.post = this.post.length > 0 ? this.post[0] : this.props.history.push("/error");
+        this.times = this.post === undefined ? '' : new Date(this.post.timestamp).toISOString();
+    } 
+    
     notify = (status) => {     
         return this.toastId = toast(status, { autoClose: true });
     }
     
     componentDidMount = () => {
-        if(!this.post.id) return;
+        if(!this.post) return;
         this.props.getComments(this.post.id);
     }
 
@@ -50,7 +56,7 @@ class PostDetails extends Component {
                 parentId:this.post.id
             }
     
-            this.props.addComments(commentDetails).then(res => this.notify('Comment has been saved successfully'))
+            this.props.addComment(commentDetails).then(res => this.notify('Comment has been saved successfully'))
 
         }else{
             let comment = {
@@ -96,7 +102,7 @@ class PostDetails extends Component {
     }
 
     deleteCommentHandler = (id) => {
-        this.props.removeComments(id).then(res => this.notify('Comment has been deleted successfully'));
+        this.props.deleteComments(id).then(res => this.notify('Comment has been deleted successfully'));
     }
 
     voteOnPost = (vote) => {
@@ -122,23 +128,29 @@ class PostDetails extends Component {
         </div>)
     }
 
-    render() {         
+    renderPost = () => {
+        return(
+            <div>
+                <div><b>Title : </b> {this.post.title}</div>
+                <div>{this.post.body}</div>
+                <div>
+                    <b>author : </b> {this.post.author} [{this.times}]
+                    <FaThumbsOUp className="icon" onClick={() => this.voteOnPost('upVote')} />
+                    {this.post.voteScore}
+                    <FaThumbsODown className="icon" onClick={() => this.voteOnPost('downVote')} />
+                </div>    
+            </div>
+        )
+    }
+
+    render() {  
         return (
             <div className="container">
                 <Breadcrumb>
                     <BreadcrumbItem><Link to="/">Posts</Link></BreadcrumbItem>
                     <BreadcrumbItem active>Post Details</BreadcrumbItem>
                 </Breadcrumb>
-                <div>
-                    <div><b>Title : </b> {this.post.title}</div>
-                    <div>{this.post.body}</div>
-                    <div>
-                        <b>author : </b> {this.post.author} [{this.times}]
-                        <FaThumbsOUp className="icon" onClick={() => this.voteOnPost('upVote')} />
-                        [{this.post.voteScore}]
-                        <FaThumbsODown className="icon" onClick={() => this.voteOnPost('downVote')} />
-                    </div>    
-                </div>
+                {this.post ? this.renderPost() : null}
                 <div>
                    {this.renderComments()} 
                 </div>
@@ -173,21 +185,19 @@ class PostDetails extends Component {
     }
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = ({commentReducer, postReducer}) => {
     return {
-        comments:state.commentReducer.comments
+        comments : commentReducer.comments,
+        posts : postReducer.posts
     }
 }
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        voteOnPost : (vote, postId) => dispatch(actionType.voteOnPost(vote, postId)),
-        addComments : (comment) => dispatch(actionType.addComment(comment)),
-        getComments : (id) => dispatch(actionType.getComments(id)),
-        editComments : (update) => dispatch(actionType.editComments(update)),
-        removeComments : (id) => dispatch(actionType.deleteComments(id)),
-        voteOnComment : (vote, id) => dispatch(actionType.voteOnComment(vote, id))
-    }
-}
+export default connect(mapStateToProps, {
+    voteOnPost,
+    addComment,
+    getComments,
+    editComments,
+    deleteComments,
+    voteOnComment
 
-export default connect(mapStateToProps, mapDispatchToProps)(PostDetails);
+})(PostDetails);

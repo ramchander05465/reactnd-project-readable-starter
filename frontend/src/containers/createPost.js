@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import uuid from 'uuid';
-import {connect} from 'react-redux';
-import {Link} from 'react-router-dom';
-import {Breadcrumb, BreadcrumbItem, Button, Form, FormGroup, Label, Input} from 'reactstrap';
+import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { Breadcrumb, BreadcrumbItem, Button, Form, FormGroup, Label, Input } from 'reactstrap';
 import { ToastContainer, toast } from 'react-toastify';
-import * as actionsType from '../actions';
+import { addPost } from '../actions/postCommand';
 
 class CreatePost extends Component {
     constructor(props){
@@ -73,7 +73,7 @@ class CreatePost extends Component {
         return (
             <div className="container">
                 {this.state.editMode ? this.renderBreadcrumb() : null}                
-                <h3>Create New Post</h3>
+                <h3>{this.state.editMode ? 'Edit Post':'Create New Post'}</h3>
                 <hr />
                 <Form>
                     <FormGroup>
@@ -118,15 +118,15 @@ class CreatePost extends Component {
     }
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = ({postReducer}) => {
     return {
-        categories:state.postReducer.categories
+        categories : postReducer.categories
     }
 }
 
 const mapDispatchToProps = (dispatch) => {
     return{
-        addPost:(post)=>dispatch(actionsType.addPost(post))
+        addPost:(post)=>dispatch(addPost(post))
     }
 }
 

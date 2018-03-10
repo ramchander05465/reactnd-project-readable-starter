@@ -1,14 +1,15 @@
 import React, { Component } from 'react';
-import {connect} from 'react-redux';
-import {withRouter} from 'react-router-dom';
-import {category} from '../actions';
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
+import { category, getPost } from '../actions/postCommand';
 import Header from '../components/header';
 import Routes from '../routes';
 
 class App extends Component {
 
   componentDidMount = () => {
-    this.props.getCategory();
+    this.props.getPost()
+      .then(res => this.props.category());    
   }
   
   render() {
@@ -21,10 +22,4 @@ class App extends Component {
   }
 }
 
-const mapDispatchToProps = (dispatch) => {
-  return{
-    getCategory:()=>dispatch(category())
-  }
-}
-
-export default withRouter(connect(null, mapDispatchToProps)(App));
+export default withRouter(connect(null, {category, getPost})(App));

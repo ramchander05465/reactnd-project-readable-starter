@@ -4,7 +4,7 @@ import {
     EDIT_COMMENT,
     REMOVE_COMMETS,
     COMMENTS_VOTE
-} from '../../actions'
+} from '../../actions/actionType'
 const INIT_STATE = {
     comments: []
 }
@@ -39,10 +39,17 @@ const reducer = (state = INIT_STATE, action) => {
                 comments:updateComment
             }
         case COMMENTS_VOTE:
-            //const updateComment = state.comments.filter(item => item.id !== action.comment.id);
-            console.log(action.vote)
+            console.log('.....', action.vote)
+            let voteOnComments = [...state.comments];
+            for (let index = 0; index < voteOnComments.length; index++) {
+                if(voteOnComments[index].id===action.vote.id){
+                    voteOnComments[index]=action.vote;
+                    break;
+                };                
+            }
             return {
-                ...state
+                ...state,
+                comments:voteOnComments
             }
         
         default :

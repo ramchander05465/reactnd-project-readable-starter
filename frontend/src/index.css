@@ -60,3 +60,7 @@ body {
 .container{
   margin-top: 10px;
 }
+
+.sortBy{
+  cursor:pointer;
+}

@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import {connect} from 'react-redux';
-import * as actionType from '../actions';
+import {Link} from 'react-router-dom';
+import { category, deletePost, voteOnPost } from '../actions/postCommand';
 import PostList from '../components/postList';
-import {Form, FormGroup, Input} from 'reactstrap'
 import { ToastContainer, toast } from 'react-toastify';
 
 class Posts extends Component {
@@ -10,32 +10,21 @@ class Posts extends Component {
     state = {
         field:'',
         voteScore:true,
-        timestamp:true,
-        category:"all"
+        timestamp:true
     }
-
-    
-    componentDidMount = () => {        
-        this.props.getPosts();
-    }
-
+   
     notify = (status) => {     
         return this.toastId = toast(status, { autoClose: true });
     }
 
     renderCategories = () =>{
-    return this.props.categories.map(category => <option key={category.name}>{category.name}</option>)
+        return this.props.categories.map(category => (<span className="category" key={category.name}>
+            <Link to={`/${category.name}`}>{category.name}</Link></span>))
     }
 
     deletePostHandler = (id) => {
-        this.props.deletePosts(id)
+        this.props.deletePost(id)
             .then(res => this.notify('Post has been delete successfully'));
-    }
-
-    getCategoryPost = (data) => {
-        this.setState({
-            category:data
-        })
     }
 
     updateSortType = (type) => {
@@ -45,33 +34,26 @@ class Posts extends Component {
         })
     }
 
-    filterdPost = () => {
-        return this.props.posts.filter(item => item.category == this.state.category)
-    }
-
     sortPosts = (obj, type) => {
         return this.state[type] ? obj.sort((a, b) => b[type] > a[type]) :  obj.sort((a, b) => b[type] < a[type])
     }
 
+    voteOnPost = (vote, postId) => {
+        this.props.voteOnPost(vote,postId).then(res => this.notify('Vote has been given successfully'));
+    }
+
     render() {
-        let posts =  this.state.category==='all' ? this.props.posts : this.filterdPost();
-        posts = this.state.field === ''? posts : this.sortPosts(posts, this.state.field)
+        let posts = this.state.field === ''? this.props.posts : this.sortPosts(this.props.posts, this.state.field)
         return (
             <div className="container">
                 <div>
                     <h4>Select Category</h4>
-                    <Form>
-                        <FormGroup>
-                            <Input type="select" name="category" onChange={(evt) => this.getCategoryPost(evt.target.value)} value={this.state.category}>
-                                <option value = "all">All</option>
-                                {this.renderCategories()}
-                            </Input>
-                        </FormGroup>
-                    </Form>
+                    {this.renderCategories()}
                 </div>
                 <PostList 
-                    postList={posts}
-                    sortPosts={(type) => this.updateSortType(type)} 
+                    postList = {posts}
+                    sortPosts = {(type) => this.updateSortType(type)}
+                    voteOnPost = {(vote, postId) => this.voteOnPost(vote, postId)} 
                     deletePosts={(id)=>this.deletePostHandler(id)} />
                 <ToastContainer />
             </div>
@@ -79,18 +61,11 @@ class Posts extends Component {
     }
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = ({postReducer}) => {
     return{    
-        categories:state.postReducer.categories,
-        posts:state.postReducer.posts
+        categories : postReducer.categories,
+        posts : postReducer.posts
     }
 }
 
-const mapDispatchToProps = (dispatch) => {
-    return{
-        getCategory:()=>dispatch(actionType.category()),
-        getPosts:()=>dispatch(actionType.getPost()),
-        deletePosts:(id)=>dispatch(actionType.deletePost(id))
-    }
-}
-export default connect(mapStateToProps, mapDispatchToProps)(Posts);
+export default connect(mapStateToProps, {category, deletePost, voteOnPost})(Posts);
