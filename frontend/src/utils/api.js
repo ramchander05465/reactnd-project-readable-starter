@@ -12,24 +12,35 @@ const headers = {
   }
 
 export const fetchCategories = () => 
-    fetch(apiURL+'categories', {headers})
+    fetch(`${apiURL}categories`, {headers})
         .then(res => res.json())
         .then(data => data.categories)
 
 export const fetchPosts = () => 
-    fetch(apiURL+'posts', {headers})
+    fetch(`${apiURL}posts`, {headers})
         .then(res => res.json())
         .then(data => data)
 
+export const fetchPostById = (id) => {
+    return fetch(`${apiURL}posts/${id}`, {headers})
+        .then(res => res.json())
+        .then(data => data)
+}
+
 export const addNewPost = (postDetails) => {
-    console.log(postDetails)
-    return fetch(apiURL+'posts', {method:'POST', headers, body:JSON.stringify(postDetails)})
+    return fetch(`${apiURL}posts`, {method:'POST', headers, body:JSON.stringify(postDetails)})
     .then(res => res.json())
     .then(data => data)
 } 
 
+export const editPost = (id, post) => {
+    return fetch(`${apiURL}posts/${id}`, {method:'PUT', headers, body:JSON.stringify(post)})
+    .then(res => res.json())
+    .then(data => data)
+}
+
 export const deletePosts = (id) =>
-    fetch(apiURL+'posts/'+id, {method:'DELETE', headers})
+    fetch(`${apiURL}posts/${id}`, {method:'DELETE', headers})
         .then(res => res.json())
         .then(data => data)
 

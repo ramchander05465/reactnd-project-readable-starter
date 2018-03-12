@@ -16,15 +16,22 @@ const postReducer = (state = INIT_STEATE, action) => {
             return {
                 ...state
             }
-        case actionType.VIEW_POST:
-            
+        case actionType.VIEW_POST:            
             return{
                 ...state,
                 posts:action.posts
             }
         case actionType.EDIT_POST:
+            let editList = [...state.posts];
+            for (let index = 0; index < editList.length; index++) {
+                if(editList[index].id===action.post.id){
+                    editList[index]=action.post;
+                    break;
+                };                
+            }
             return{
-                ...state
+                ...state,
+                posts:editList
             }
         case actionType.DELETE_POST:
             const updatePost = state.posts.filter(item => item.id !== action.post.id);

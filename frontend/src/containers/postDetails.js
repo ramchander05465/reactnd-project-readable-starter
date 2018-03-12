@@ -1,19 +1,23 @@
 import React, { Component } from 'react';
 import uuid from 'uuid';
-import {voteOnPost} from '../actions/postCommand'
+import { getPostById, voteOnPost, deletePost} from '../actions/postCommand'
 import {addComment,getComments, editComments,deleteComments,voteOnComment} from '../actions/commentCommand';
 import {connect} from 'react-redux';
 import {Breadcrumb, BreadcrumbItem} from 'reactstrap';
-import {FaEdit, FaTrash, FaThumbsOUp, FaThumbsODown} from 'react-icons/lib/fa';
 import {Link} from 'react-router-dom';
 import { Button, Form, FormGroup, Input} from 'reactstrap';
 import { ToastContainer, toast } from 'react-toastify';
+
+import Post from '../components/post';
+
+import Comment from '../components/comment'
 
 class PostDetails extends Component {
     post;
     postId;
     times;
     commentForEdit;
+    isDeleted=false;
     constructor(props){
         super(props);
         this.postId = this.props.match.params.postId;
@@ -25,20 +29,24 @@ class PostDetails extends Component {
         body : '',
         commentID : null
     }
-    
-    componentWillMount = () => {
-        this.post = this.props.posts.filter(data => data.id === this.postId);
-        this.post = this.post.length > 0 ? this.post[0] : this.props.history.push("/error");
-        this.times = this.post === undefined ? '' : new Date(this.post.timestamp).toISOString();
-    } 
-    
+        
     notify = (status) => {     
         return this.toastId = toast(status, { autoClose: true });
     }
-    
-    componentDidMount = () => {
-        if(!this.post) return;
-        this.props.getComments(this.post.id);
+
+    componentDidMount = () => {        
+        this.props.getComments(this.postId);
+    }
+
+    voteOnPost = (vote) => {
+        this.props.voteOnPost(vote,this.postId)
+            .then(res => this.notify('Vote has been given successfully'));
+    }
+
+    deletePostHandler = () => {
+        this.props.deletePost(this.postId).then(
+            this.isDeleted = true
+        )
     }
 
     addCommentHandler = () => {
@@ -49,29 +57,30 @@ class PostDetails extends Component {
 
         if(!this.state.editMode){
             let commentDetails = {
-                id:uuid.v4(),
-                timestamp:Date.now(),
-                body:this.state.body,
-                author:this.state.author,
-                parentId:this.post.id
+                id : uuid.v4(),
+                timestamp : Date.now(),
+                body : this.state.body,
+                author : this.state.author,
+                parentId : this.postId
             }
     
             this.props.addComment(commentDetails).then(res => this.notify('Comment has been saved successfully'))
 
         }else{
             let comment = {
-                id:this.state.commentID,
-                timestamp:Date.now(),
-                body:this.state.body,
-                author:this.state.author
+                id : this.state.commentID,
+                timestamp : Date.now(),
+                body : this.state.body,
+                author : this.state.author
             } 
             this.props.editComments(comment).then(res => this.notify('Comment has updated successfully'));           
         }
+
         this.setState({
-            editMode:false,
-            author:'',
-            body:'',
-            commentID:null
+            editMode : false,
+            author : '',
+            body : '',
+            commentID : null
         })    
     }
 
@@ -84,20 +93,20 @@ class PostDetails extends Component {
 
     resetForm = () => {
         this.setState({
-            editMode:false,
-            author:'',
-            body:'',
-            commentID:null
+            editMode : false,
+            author : '',
+            body : '',
+            commentID : null
         }) 
     }
 
     editCommentsHandler = (comment) => {
         this.setState({
             ...this.state,
-            editMode:true,
-            author:comment.author,
-            body:comment.body,
-            commentID:comment.id
+            editMode : true,
+            author : comment.author,
+            body : comment.body,
+            commentID : comment.id
         })
     }
 
@@ -105,57 +114,34 @@ class PostDetails extends Component {
         this.props.deleteComments(id).then(res => this.notify('Comment has been deleted successfully'));
     }
 
-    voteOnPost = (vote) => {
-        this.props.voteOnPost(vote,this.post.id).then(res => this.notify('Vote has been given successfully'));
-    }
-
     voteOnComment = (vote, id) => {
         this.props.voteOnComment(vote,id).then(res => this.notify('Vote has been given successfully'))
     }
 
-    renderComments = () => {
-        if(!this.props.comments) return; 
-        return this.props.comments.map(item => <div key={item.id}><hr />
-            <div>{item.body}</div>
-            <div>{item.author}</div>
-            <div>
-                <FaEdit className="icon" onClick={() => this.editCommentsHandler(item)} />
-                <FaTrash className="icon" onClick={() => this.deleteCommentHandler(item.id)} />
-                <FaThumbsOUp className="icon" onClick={() => this.voteOnComment('upVote', item.id)} />
-                [{item.voteScore}]
-                <FaThumbsODown className="icon" onClick={() => this.voteOnComment('downVote', item.id)} />
-            </div>                
-        </div>)
-    }
-
     renderPost = () => {
+        let selectedPost = this.props.posts.filter(post => post.id === this.postId);
         return(
-            <div>
-                <div><b>Title : </b> {this.post.title}</div>
-                <div>{this.post.body}</div>
-                <div>
-                    <b>author : </b> {this.post.author} [{this.times}]
-                    <FaThumbsOUp className="icon" onClick={() => this.voteOnPost('upVote')} />
-                    {this.post.voteScore}
-                    <FaThumbsODown className="icon" onClick={() => this.voteOnPost('downVote')} />
-                </div>    
-            </div>
+            <Post 
+                info={selectedPost[0]}
+                deletePostHandler = {this.deletePostHandler}
+                voteOnPost = {this.voteOnPost} />
         )
     }
 
-    render() {  
+    renderComments = () => {
+        return this.props.comments.map(item => <Comment 
+            key={item.id}
+            info={item} 
+            deleteCommentHandler={this.deleteCommentHandler}
+            voteOnComment={this.voteOnComment}
+            editCommentsHandler={this.editCommentsHandler} />)
+    }
+
+    renderCommentForm = () => {
+        let selectedPost = this.props.posts.filter(post => post.id === this.postId);
+        if(selectedPost.length === 0) return        
         return (
-            <div className="container">
-                <Breadcrumb>
-                    <BreadcrumbItem><Link to="/">Posts</Link></BreadcrumbItem>
-                    <BreadcrumbItem active>Post Details</BreadcrumbItem>
-                </Breadcrumb>
-                {this.post ? this.renderPost() : null}
-                <div>
-                   {this.renderComments()} 
-                </div>
-                <hr />
-                <div>
+            <div>
                 <Form>
                     <FormGroup>
                         <Input type="textarea" 
@@ -172,13 +158,25 @@ class PostDetails extends Component {
                             placeholder="Author Name"
                             disabled = {this.state.editMode ? true:false} />
                     </FormGroup>                     
-                    </Form> 
-                    
-                    <div>
-                        <Button onClick={() => this.addCommentHandler()}>Save</Button>
-                        {this.state.editMode ? <Button onClick={() => this.resetForm()}>Cancel</Button>: null}
-                    </div>
+                </Form>                        
+                <div>
+                    <Button onClick={() => this.addCommentHandler()}>Save</Button>
+                    {this.state.editMode ? <Button onClick={() => this.resetForm()}>Cancel</Button>: null}
                 </div>
+            </div>
+        )
+    }
+        
+    render() {  
+        return (
+            <div className="container">
+                <Breadcrumb>
+                    <BreadcrumbItem><Link to="/">Posts</Link></BreadcrumbItem>
+                    <BreadcrumbItem active>Post Details</BreadcrumbItem>
+                </Breadcrumb>
+                {this.isDeleted ? <h3>Post Deleted</h3> : this.renderPost()}
+                {this.isDeleted ? '' : this.renderComments()}
+                {this.isDeleted ? '' : this.renderCommentForm()}
                 <ToastContainer />
             </div>
         );
@@ -193,11 +191,12 @@ const mapStateToProps = ({commentReducer, postReducer}) => {
 }
 
 export default connect(mapStateToProps, {
+    getPostById,
     voteOnPost,
+    deletePost,
     addComment,
     getComments,
     editComments,
     deleteComments,
     voteOnComment
-
 })(PostDetails);

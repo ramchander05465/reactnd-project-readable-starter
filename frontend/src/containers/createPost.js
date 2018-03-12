@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Breadcrumb, BreadcrumbItem, Button, Form, FormGroup, Label, Input } from 'reactstrap';
 import { ToastContainer, toast } from 'react-toastify';
-import { addPost } from '../actions/postCommand';
+import { addPost, editPost } from '../actions/postCommand';
 
 class CreatePost extends Component {
     constructor(props){
@@ -60,6 +60,20 @@ class CreatePost extends Component {
             .then(data => this.resetSateValue());
     }
 
+    editPost = () => {
+        if(this.state.title===''){
+            this.notify('Please enter post title');
+            return;
+        }
+        let post = {
+            title:this.state.title,
+            body:this.state.body
+        };
+        this.props.editPost(this.state.id, post)
+            .then(res => this.notify('Post has been saved successfully'))
+            .then(data => this.resetSateValue());
+    }
+
     renderBreadcrumb = () => {
         return(
             <Breadcrumb>
@@ -110,7 +124,7 @@ class CreatePost extends Component {
                             {this.renderCategory()}
                         </Input>
                     </FormGroup>              
-                    <Button onClick={()=>this.postDetails()}>Submit</Button>
+                    {this.editMode ? <Button onClick={()=>this.editPost()}>Update</Button> : <Button onClick={()=>this.postDetails()}>Submit</Button>}
                 </Form>
                 <ToastContainer />
             </div>
@@ -124,10 +138,4 @@ const mapStateToProps = ({postReducer}) => {
     }
 }
 
-const mapDispatchToProps = (dispatch) => {
-    return{
-        addPost:(post)=>dispatch(addPost(post))
-    }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(CreatePost);
+export default connect(mapStateToProps, {addPost, editPost})(CreatePost);
